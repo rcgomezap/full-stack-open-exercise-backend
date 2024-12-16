@@ -52,8 +52,8 @@ app.post("/api/persons", (request,response) => {
     if (!body.name || !body.number)
         return badRequest(response,"name or number missing")
     
-    if (data.find((p) => p.name === body.name))
-        return badRequest(response,"name must be unique")
+    // if (data.find((p) => p.name === body.name)) // TODO
+    //     return badRequest(response,"name must be unique")
 
     const person = new Persons({
         name: body.name,
