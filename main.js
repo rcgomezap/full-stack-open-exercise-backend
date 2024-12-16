@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require("express")
 const morgan = require("morgan")
 const cors = require("cors")
+const Persons = require("./models/person")
 
 const app = express()
 app.use(express.json())
@@ -11,34 +13,15 @@ morgan.token('type', function (req, res) {return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :type'))
 app.use(express.static('dist'))
 
-data = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 const badRequest = (response,message) => response.status(400).json({error: message}) 
+const notFound = (response, message) => response.status(404).send(message ? {error: message} : null)
 
 
 app.get("/api/persons", (request,response) => {
-    response.json(data)
+    Persons.find({}).then(persons => {
+        console.log(persons)
+        response.json(persons)
+    })
 })
 
 app.get("/info", (request,response) => {
@@ -52,8 +35,13 @@ app.get("/info", (request,response) => {
 
 app.get("/api/persons/:id", (request,response) => {
     const id = request.params.id
-    found = data.find((p) => p.id === id)
-    found ? response.json(found) : response.status(404).send()
+    Persons.findById(id).then(found => {
+        if (found === null)
+            return notFound(response)
+        response.json(found)})
+    .catch(er => {
+        return notFound(response,'malformatted ID')
+    })
 })
 
 app.post("/api/persons", (request,response) => {
@@ -67,24 +55,18 @@ app.post("/api/persons", (request,response) => {
     if (data.find((p) => p.name === body.name))
         return badRequest(response,"name must be unique")
 
-    const person = {
-        id: Math.floor(Math.random()*100000)  ,
+    const person = new Persons({
         name: body.name,
         number: body.number
-    }
+    })    
 
-    data.push(person)
-
-    response.json(data)
-
-    
+    person.save().then(result => response.json(result))
 })
 
 
 app.delete("/api/persons/:id", (request,response) => {
     const id = request.params.id
-    data = data.filter((p) => p.id != id) 
-    response.json(data)
+    Persons.findByIdAndDelete(id).then(data => response.json(data))
 })
 
 const PORT = 3001
