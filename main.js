@@ -19,7 +19,6 @@ const notFound = (response, message) => response.status(404).send(message ? {err
 
 app.get("/api/persons", (request,response) => {
     Persons.find({}).then(persons => {
-        console.log(persons)
         response.json(persons)
     })
 })
