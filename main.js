@@ -17,6 +17,8 @@ const notFound = (response, message) => response.status(404).send(message ? {err
 const errorHandler = (error, request, response, next) => {
     if (error.name === 'CastError')
         return badRequest(response, 'malformatted id')
+    else if (error.name === 'ValidationError')
+        return badRequest(response, error.message)
 
     next(error)
 }
@@ -48,7 +50,7 @@ app.get("/api/persons/:id", (request, response, next) => {
     .catch(er => next(er))
 })
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
     body = request.body
     
     if (!body.name || !body.number)
@@ -64,13 +66,19 @@ app.post("/api/persons", (request, response) => {
         })    
 
         person.save().then(result => response.json(result))
+        .catch(er => next(er))
     })
 })
 
 
 app.delete("/api/persons/:id", (request, response, next) => {
     const id = request.params.id
-    Persons.findByIdAndDelete(id).then(data => response.json(data))
+    Persons.findByIdAndDelete(id).then(data => {
+        if (data)
+            response.json(data)
+        else
+            return badRequest(response, `Person with ID ${id} already deleted from server`)
+    })
     .catch(er => next(er))
 })
 

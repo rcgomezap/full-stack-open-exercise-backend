@@ -6,7 +6,11 @@ mongoose.connect(url).then(result => console.log("Connected to DB with url", url
 .catch(er => console.log('Error connecting to db',er.message))
 
 const personSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String,
+        minLength: 3,
+        required: true
+    },
     number: String
 })
 
